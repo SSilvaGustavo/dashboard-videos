@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Header } from "../components/Header";
 import { Sidebar } from "../components/Sidebar";
 import { Video } from "../components/Video";
@@ -10,7 +10,7 @@ const { slug } = useParams<{slug: string}>()
     <div className="flex flex-col min-h-screen">
       <Header />
       <main className="flex flex-1">
-        {slug ? <Video lessonSlug={ slug } /> : <div className="flex-1"/>}
+        {slug ? <Video lessonSlug={ slug } /> : <Video lessonSlug={"aula-01"} />}
         <Sidebar />
       </main>
     </div>
