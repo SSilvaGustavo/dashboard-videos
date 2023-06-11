@@ -4,8 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { Logo } from "../components/Logo";
 import Lottie from "lottie-react";
 import animationData from "../assets/video-animation.json";
-import { EnvelopeSimple, MonitorPlay, User } from "phosphor-react";
+import { EnvelopeSimple, User } from "phosphor-react";
 import { AppContext } from "../context/AppContext";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface CheckEmailQuery {
   subscribers: {
@@ -38,31 +40,56 @@ export function Subscribe() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [emailExists, setEmailExists] = useState(false);
+  const [firstName] = name.split(" ");
 
   const [createSubscriber, { loading }] = useMutation(
     CREATE_SUBSCRIBER_MUTATION
   );
-  const { data } = useQuery<CheckEmailQuery>(CHECK_EMAIL_EXISTS_QUERY, {variables: { email }});
+
+  const { data: emailData } = useQuery<CheckEmailQuery>(
+    CHECK_EMAIL_EXISTS_QUERY,
+    {
+      variables: { email },
+    }
+  );
 
   useEffect(() => {
-    setEmailExists(!!data?.subscribers?.length);
-  }, [data]);
+    if (emailData && emailData.subscribers) {
+      setEmailExists(emailData.subscribers.length > 0);
+    }
+  }, [emailData]);
 
   async function handleSubscribe(event: FormEvent) {
     event.preventDefault();
-  
-    if (emailExists && data?.subscribers[0].name === name) {
-      return navigate("/event");
+    try {
+      if (emailExists && emailData?.subscribers[0].name === name) {
+        toast.success(`Bem vindo de volta ${firstName}!`);
+        return setTimeout(() => {
+          navigate("/event");
+        }, 2000);
+      }
+
+      if (emailExists && emailData?.subscribers[0].name !== name) {
+        toast.error("Nome invalido, por favor tente novamente!");
+      }
+
+      if (!emailExists) {
+        await createSubscriber({
+          variables: {
+            name,
+            email,
+          },
+        });
+
+        toast.success(`Usuário criado com sucesso, bem vindo ${firstName}`);
+        setTimeout(() => {
+          navigate("/event");
+        }, 2000);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Ocorreu um erro inesperado, tente novamente mais tarde!");
     }
-
-    await createSubscriber({
-      variables: {
-        name,
-        email,
-      },
-    });
-
-    navigate("/event");
   }
 
   return (
@@ -137,6 +164,18 @@ export function Subscribe() {
           </form>
         </div>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={1000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss={false}
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
     </div>
   );
 }
