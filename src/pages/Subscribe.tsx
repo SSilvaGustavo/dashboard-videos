@@ -1,5 +1,5 @@
-import { gql, useMutation } from "@apollo/client";
-import { useState, FormEvent, useContext } from "react";
+import { gql, useMutation, useQuery } from "@apollo/client";
+import { useState, FormEvent, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Logo } from "../components/Logo";
 import Lottie from "lottie-react";
@@ -7,10 +7,26 @@ import animationData from "../assets/video-animation.json";
 import { EnvelopeSimple, MonitorPlay, User } from "phosphor-react";
 import { AppContext } from "../context/AppContext";
 
+interface CheckEmailQuery {
+  subscribers: {
+    id: string;
+    name: string;
+  }[];
+}
+
 const CREATE_SUBSCRIBER_MUTATION = gql`
   mutation CreateSubscriber($name: String!, $email: String!) {
     createSubscriber(data: { name: $name, email: $email }) {
       id
+    }
+  }
+`;
+
+const CHECK_EMAIL_EXISTS_QUERY = gql`
+  query CheckEmailExists($email: String!) {
+    subscribers(where: { email: $email }, stage: DRAFT) {
+      id
+      name
     }
   }
 `;
@@ -21,13 +37,23 @@ export function Subscribe() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailExists, setEmailExists] = useState(false);
 
   const [createSubscriber, { loading }] = useMutation(
     CREATE_SUBSCRIBER_MUTATION
   );
+  const { data } = useQuery<CheckEmailQuery>(CHECK_EMAIL_EXISTS_QUERY, {variables: { email }});
+
+  useEffect(() => {
+    setEmailExists(!!data?.subscribers?.length);
+  }, [data]);
 
   async function handleSubscribe(event: FormEvent) {
     event.preventDefault();
+  
+    if (emailExists && data?.subscribers[0].name === name) {
+      return navigate("/event");
+    }
 
     await createSubscriber({
       variables: {
@@ -35,6 +61,7 @@ export function Subscribe() {
         email,
       },
     });
+
     navigate("/event");
   }
 
@@ -80,6 +107,7 @@ export function Subscribe() {
                   className="bg-transparent flex-1 text-gray-100 placeholder:text-gray-450 outline-none"
                   type="text"
                   placeholder="Seu nome completo"
+                  required
                   onChange={(event) => setName(event.target.value)}
                 />
               </label>
@@ -94,6 +122,7 @@ export function Subscribe() {
                   className="bg-transparent flex-1 text-gray-100 placeholder:text-gray-450 outline-none"
                   type="email"
                   placeholder="johndoe@example.com"
+                  required
                   onChange={(event) => setEmail(event.target.value)}
                 />
               </label>
