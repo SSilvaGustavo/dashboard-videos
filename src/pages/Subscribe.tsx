@@ -63,7 +63,7 @@ export function Subscribe() {
     event.preventDefault();
     try {
       if (emailExists && emailData?.subscribers[0].name === name) {
-        toast.success(`Bem vindo de volta ${firstName}!`);
+        toast.success(`Bem vindo(a) de volta ${firstName}!`);
         return setTimeout(() => {
           navigate("/event");
         }, 2000);
@@ -81,7 +81,7 @@ export function Subscribe() {
           },
         });
 
-        toast.success(`Usuário criado com sucesso, bem vindo ${firstName}`);
+        toast.success(`Usuário criado com sucesso, bem vindo(a) ${firstName}!`);
         setTimeout(() => {
           navigate("/event");
         }, 2000);
@@ -90,6 +90,15 @@ export function Subscribe() {
       console.log(error);
       toast.error("Ocorreu um erro inesperado, tente novamente mais tarde!");
     }
+  }
+
+  function formattedName(fullName: string) {
+    fullName.trim();
+    const formattedName = fullName
+      .split(" ")
+      .map((name) => name.charAt(0).toUpperCase() + name.slice(1).toLowerCase())
+      .join(" ");
+    return formattedName;
   }
 
   return (
@@ -135,7 +144,9 @@ export function Subscribe() {
                   type="text"
                   placeholder="Seu nome completo"
                   required
-                  onChange={(event) => setName(event.target.value)}
+                  onChange={(event) =>
+                    setName(formattedName(event.target.value))
+                  }
                 />
               </label>
             </div>
@@ -150,7 +161,9 @@ export function Subscribe() {
                   type="email"
                   placeholder="johndoe@example.com"
                   required
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(event) =>
+                    setEmail(event.target.value.trim().toLowerCase())
+                  }
                 />
               </label>
             </div>
